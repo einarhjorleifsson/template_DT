@@ -1,0 +1,202 @@
+---
+title: DataTables Extensions
+---
+
+---
+
+**DataTables** has a number of extensions, and all of them have been integrated into **DT**. You can use the `extensions` argument of `datatable()` to add extensions to the table. Although we only use one extension in each section below, it is possible to apply multiple extensions to one table by providing the names of the extensions as a character vector, e.g. `extensions = c('AutoFill', 'ColReorder')`.
+
+For the time being, because the **DataTables** library does not have a consistent way to specify initialization options for its extensions, some extensions can be initialized via the `options` argument of `datatable()`, and some have to be initialized differently (including `r paste(DT:::extNew, sep = ', ')`). In the latter case, you can use a named list for the `extensions` argument: the name of each element is the extension name, and the list element is the initialization options, e.g. `extensions = list(AutoFill = list(mode = 'both'), ColReorder = NULL)`.
+
+<div class="panel panel-danger">
+<div class="panel-heading">Known Issues of Extensions</div>
+<div class="panel-body">
+
+Most **DataTables** extensions work on their own, but some may not work well when certain non-default features are enabled or used in Shiny apps. Below is a list of known issues:
+
+- Column filters may not work well with the extensions `FixedColumns`, `FixedHeader`, and `Scroller` ([#41](https://github.com/rstudio/DT/issues/41));
+- The `Responsive` extension does not work well in Shiny apps ([#69](https://github.com/rstudio/DT/issues/69));
+
+</div>
+</div>
+
+```{r}
+# this is the example data we use on this page
+iris2 = head(iris, 30)
+```
+
+# AutoFill
+
+With the `AutoFill` extension, you will see a plus sign in the bottom-right corner of a cell when you mouse over the cell. You can drag the sign to automatically fill the column.
+
+```{r}
+datatable(iris2, extensions = 'AutoFill')
+# pass some initialization options to AutoFill: disable auto filling on the
+# first (0) column and last (-1) column; disable incremental filling on the
+# columns 2 and 3 (i.e. 1 and 2 using JavaScript indexing)
+datatable(iris2, extensions = list(AutoFill = list(
+  columnDefs = list(
+    list(enable = FALSE, targets = c(0, -1)),
+    list(increment = FALSE, targets = c(1, 2))
+  )
+)))
+```
+
+# ColReorder
+
+You can click and drag the table header to move a certain column to a different place using the `ColReorder` extension.
+
+```{r}
+datatable(iris2, extensions = 'ColReorder', options = list(dom = 'Rlfrtip'))
+# realtime updating
+datatable(iris2, extensions = 'ColReorder', options = list(
+  dom = 'Rlfrtip', colReorder = list(realtime = TRUE)
+))
+```
+
+# ColVis
+
+The `ColVis` extension adds a button to the table to show/hide certain columns.
+
+```{r}
+datatable(
+  iris2, rownames = FALSE,
+  extensions = 'ColVis', options = list(dom = 'C<"clear">lfrtip')
+)
+# exclude the first two columns (i.e. they are always visible)
+datatable(
+  iris2, rownames = FALSE,
+  extensions = 'ColVis', options = list(
+    dom = 'C<"clear">lfrtip',
+    colVis = list(exclude = c(0, 1), activate = 'mouseover')
+  )
+)
+```
+
+# FixedColumns
+
+When a table is too wide, you can fix certain columns (e.g. the left and/or the right column) so that they will be visible when you scroll the table horizontally.
+
+```{r}
+m = as.data.frame(round(matrix(rnorm(100), 5), 5))
+datatable(
+  m, extensions = 'FixedColumns',
+  options = list(
+    dom = 't',
+    scrollX = TRUE,
+    scrollCollapse = TRUE
+  )
+)
+# fix some left and right columns
+datatable(
+  m, extensions = list(FixedColumns = list(leftColumns = 2, rightColumns = 1)),
+  options = list(
+    dom = 't',
+    scrollX = TRUE,
+    scrollCollapse = TRUE
+  )
+)
+```
+
+# FixedHeader
+
+You may want the table header to be always visible when scrolling down the table, and you can use the `FixedHeader` extension in this case.
+
+```{r eval=FALSE}
+datatable(
+  iris, options = list(pageLength = 50), extensions = 'FixedHeader'
+)
+```
+
+Since we have a navigation bar on the top of this page, this extension does not work well on this particular page (the table header will be hidden behind the navigation bar). Please see [this separate page](001-fixedheader.html) for a real example.
+
+# KeyTable
+
+The `KeyTable` extensions provides the ability of navigating through the table like Excel: a cell is highlighted by a box, and you can move around using the arrow keys (Left/Right/Up/Down).
+
+```{r}
+datatable(iris, extensions = 'KeyTable')
+```
+
+# Responsive
+
+The `Responsive` extension makes the table columns responsive in the sense that when the page is too narrow, certain columns can be automatically collapsed and hidden. In the example below, as you decrease the page width, you will see a sequence of columns collapsed and a button appear on the left. You can click the button to expand the data of the hidden columns behind it.
+
+```{r}
+datatable(iris, extensions = 'Responsive')
+```
+
+# Scroller
+
+When the table has a large number of rows, you may not want to render all rows on the page immediately since it will be slow. The `Scroller` extension makes it possible to only render the visible portion of the table.
+
+```{r}
+m = matrix(runif(1000 * 4), ncol = 4, dimnames = list(NULL, letters[1:4]))
+m = cbind(id = seq_len(nrow(m)), round(m, 2))
+datatable(m, extensions = 'Scroller', options = list(
+  deferRender = TRUE,
+  dom = "frtiS",
+  scrollY = 200,
+  scrollCollapse = TRUE
+))
+```
+
+You can also save the data as JSON in a file and load it via the `ajax` option. See a live example in Shiny [here](https://yihui.shinyapps.io/DT-scroller/).
+
+# TableTools
+
+The `TableTools` extension adds a button toolbar to the table to copy the table to clipboard, save the table as CSV/XLS/PDF, and print the table, etc. Unlike other extensions, it has a special dependency on a Flash SWF file, which you have to copy to your application. The function `DT::copySWF()` was designed to do this job, and it returns a character string that can be used as the `sSwfPath` option of `TableTools`. This function has an argument `pdf = FALSE`, which determines if you want to enable the feature of saving the table as PDF (disabled by default).
+
+Please note that you must view the table via an HTTP server when you enable this extension, because the SWF file does not work on a static HTML page when opened locally without an HTTP server. There are several possible solutions, e.g.
+
+- render the table in a [Shiny](shiny.html) app (since **shiny** will start a server to serve the app)
+- if you rendered the table to a static HTML page (e.g. in an R Markdown document), you can
+    - publish the HTML page to a website (e.g. Github pages)
+    - serve the HTML page locally (e.g. using the [**servr**](https://github.com/yihui/servr) package)
+
+This page is currently hosted on Github, so you should see the toolbar from `TableTools` below:
+
+```{r}
+datatable(
+  iris, extensions = 'TableTools', options = list(
+    dom = 'T<"clear">lfrtip',
+    tableTools = list(sSwfPath = copySWF())
+  )
+)
+```
+
+If you want to view this page locally, you cannot just click and open the file `extensions.html`. Instead, you may run `servr::httd()` in R to host the website locally.
+
+As mentioned before, you can use this extension in a Shiny app, and here is a minimal example. You may save the R code below to a file named `app.R`, and create a directory named `www` under the directory of `app.R`. Then `shiny::runApp()` should launch the app of the table rendered with `TableTools`.
+
+```{r eval=FALSE, message=FALSE}
+library(shiny)
+library(DT)
+shinyApp(
+  ui = fluidPage(dataTableOutput('foo')),
+  server = function(input, output) {
+    output$foo = renderDataTable({
+      datatable(
+        iris, extensions = 'TableTools', options = list(
+          dom = 'T<"clear">lfrtip',
+          tableTools = list(sSwfPath = copySWF('www'))
+        )
+      )
+    })
+  }
+)
+```
+
+Below are more examples of TableTools:
+
+- [Customize TableTools Buttons](003-tabletools-buttons.html)
+
+<script type="text/javascript">
+// a certain extension scrolls the page to Section 6 for some reason, so scroll
+// to top first on load
+$(function() {
+  setTimeout(function() {
+    window.scrollTo(0, 0);
+  }, 1);
+});
+</script>

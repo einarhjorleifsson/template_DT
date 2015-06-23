@@ -1,0 +1,58 @@
+---
+title: Server-side Processing in R
+---
+
+---
+
+We have been using client-side processing in all the above examples, i.e., searching, pagination, and ordering are done using JavaScript in the web browser. When the size of the data is huge, it may be more efficient to process the data on the server. DataTables supports retrieving data from a server by sending Ajax requests, a.k.a the ["server-side processing"](http://datatables.net/examples/data_sources/server_side.html).
+
+<div class="alert alert-info">
+**Version Note:** The API for doing server-side processing changed in DT v0.0.65. Please update if you are using an older version.
+</div>
+
+# A Shiny Example
+
+If you have used **DataTables** in **shiny** before, you might know that **shiny** uses the server-side processing model for **DataTables**, which basically means the data is processed through R, and R will return the JSON data to the client.
+
+Server-side processing in Shiny is enabled by the `DT::renderDataTable` parameter `server = TRUE`; it is enabled by default. There is an example in the **DT** package, which you can run by
+
+```{r eval=FALSE}
+shiny::runApp(system.file('examples', 'DT-shiny', package = 'DT'))
+```
+
+Below is the source code of the example app:
+
+## ui.R
+
+```{r include=FALSE}
+DTShinyEx = function(file) {
+  readLines(system.file('examples', 'DT-shiny', file, package = 'DT'))
+}
+```
+
+```{r ui, code=DTShinyEx('ui.R'), eval=FALSE}
+```
+
+## server.R
+
+```{r server, code=DTShinyEx('server.R'), eval=FALSE}
+```
+
+# A JSONP Example
+
+Now let's try the [JSONP data source example](http://datatables.net/examples/server_side/jsonp.html) on the DataTables website. It is fairly simple to reproduce that example here using the `datatable()` function with an option `ajax` that specifies the data URL:
+
+```{r}
+employee = data.frame(
+  `First name` = character(), `Last name` = character(), Position = character(),
+  Office = character(), `Start date` = character(), Salary = numeric(),
+  check.names = FALSE
+)
+datatable(employee, options = list(
+  ajax = list(
+    serverSide = TRUE, processing = TRUE,
+    url = 'http://datatables.net/examples/server_side/scripts/jsonp.php',
+    dataType = 'jsonp'
+  )
+))
+```
