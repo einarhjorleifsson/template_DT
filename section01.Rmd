@@ -22,3 +22,10 @@ title: How did I get here?
     rm -r libs/nouislider
     rm -r selectize
     git commit -a -m 'simplified'
+
+Then some manual non-coded editing.
+
+And then ...
+
+    git remote add origin git@github.com:einarhjorleifsson/template_DT.git
+    git push -u origin master
