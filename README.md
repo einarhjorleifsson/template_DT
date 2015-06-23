@@ -10,21 +10,18 @@ Proceeding from here
     rm -rf .git
     git init
     
-And then modify:
+And then modify 'include/before_body.html'
 
-- `include/before_body.html`
-
+```
     <li><a href="./">Home</a></li>
     <li><a href="section01.html">Section 1</a></li>
     <li><a href="section02.html">Section 2</a></li>
     <li><a href="section03.html">Section 3</a></li>
     <li><a href="section04.html">Section 4</a></li>
     <li><a href="section05.html">Section 5</a></li>
-    ...
+
     <li><a href="https://github.com/einarhjorleifsson/template_DT" title="View Source on Github"><i class="fa fa-github fa-lg"></i></a></li>
-
-
-
+```
 ### How did I get here?
 
     git clone https://github.com/rstudio/DT.git
